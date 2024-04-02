@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String?    @db.VarChar(255)
+  email     String     @unique @db.VarChar(255)
+  carts     Cart[]
+  purchases Purchase[]
+}
+
+model Product {
+  id           Int        @id @default(autoincrement())
+  title        String     @db.VarChar(255)
+  description  String     @db.Text()
+  conditions   String     @db.Text()
+  img_main     String     @db.VarChar(255)
+  video        String?    @db.VarChar(255)
+  menu         String?    @db.VarChar(255)
+  n_pax        Int?       @default(1)
+  price        Float
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId Int
+
+  cartItems CartItem[]
+}
+
+model Restaurant {
+  id             Int     @id @default(autoincrement())
+  name           String  @db.VarChar(255)
+  direcction     String  @db.VarChar(255)
+  url_googleMaps String? @db.VarChar(255)
+  logo           String  @db.VarChar(255)
+  schedule       String? @db.VarChar(255)
+
+  products Product[]
+}
+
+model Cart {
+  id          Int        @id @default(autoincrement())
+  user        User       @relation(fields: [userId], references: [id])
+  userId      Int
+  isAbandoned Boolean    @default(false)
+  abandonedAt DateTime?
+  cartItems   CartItem[]
+
+  Purchase Purchase[]
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  cartId    Int
+}
+
+model Purchase {
+  id              Int      @id @default(autoincrement())
+  date            DateTime @default(now())
+  totalAmount     Float
+  user            User     @relation(fields: [userId], references: [id])
+  userId          Int
+  paymentIntentId String? // ID del intento de pago en Stripe
+  paymentStatus   String? // Estado del pago (p. ej., 'succeeded', 'failed', 'pending')
+  paymentMethod   String? // Método de pago utilizado (p. ej., 'card', 'bank_transfer')
+  cart            Cart     @relation(fields: [cartId], references: [id])
+  cartId          Int
+}
